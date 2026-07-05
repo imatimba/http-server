@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"sync/atomic"
 )
 
@@ -41,15 +41,22 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	mux.HandleFunc("GET /api/metrics", func(cfg *apiConfig) http.HandlerFunc {
+	mux.HandleFunc("GET /admin/metrics", func(cfg *apiConfig) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Hits: " + strconv.Itoa(int(cfg.fileserverHits.Load()))))
+			w.Write([]byte(fmt.Sprintf(`
+<html>
+  <body>
+    <h1>Welcome, Chirpy Admin</h1>
+    <p>Chirpy has been visited %d times!</p>
+  </body>
+</html>
+`, cfg.fileserverHits.Load())))
 		}
 	}(apiCfg))
 
-	mux.HandleFunc("POST /api/reset", func(cfg *apiConfig) http.HandlerFunc {
+	mux.HandleFunc("POST /admin/reset", func(cfg *apiConfig) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			cfg.fileserverHits.Store(0)
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -57,6 +64,8 @@ func main() {
 			w.Write([]byte("Reset OK"))
 		}
 	}(apiCfg))
+
+	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
 
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
 	log.Fatal(server.ListenAndServe())
