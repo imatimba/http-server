@@ -25,7 +25,7 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]bool{
-		"valid": true,
+	respondWithJSON(w, http.StatusOK, map[string]string{
+		"cleaned_body": cleanBodyString(params.Body),
 	})
 }
