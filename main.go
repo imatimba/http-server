@@ -1,14 +1,23 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/imatimba/http-server/internal/database"
+	"github.com/joho/godotenv"
+
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db             *database.Queries
+	platform       string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -19,6 +28,18 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func main() {
+	godotenv.Load()
+
+	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	dbQueries := database.New(db)
+
 	const (
 		port         = ":8080"
 		filepathRoot = "."
@@ -30,7 +51,11 @@ func main() {
 		Handler: mux,
 	}
 
-	apiCfg := &apiConfig{}
+	apiCfg := &apiConfig{
+		fileserverHits: atomic.Int32{},
+		db:             dbQueries,
+		platform:       platform,
+	}
 	fsServer := http.FileServer(http.Dir(filepathRoot))
 
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", fsServer)))
@@ -56,16 +81,10 @@ func main() {
 		}
 	}(apiCfg))
 
-	mux.HandleFunc("POST /admin/reset", func(cfg *apiConfig) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			cfg.fileserverHits.Store(0)
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Reset OK"))
-		}
-	}(apiCfg))
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerDeleteAllUsers)
 
 	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
 	log.Fatal(server.ListenAndServe())
