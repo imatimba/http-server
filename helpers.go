@@ -18,17 +18,17 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-func cleanBodyString(body string) string {
+func validateChirp(body string) bool {
 	blockedWords := []string{"kerfuffle", "sharbert", "fornax"}
 	bodyWords := strings.Split(body, " ")
 
-	for _, blockedWord := range blockedWords {
-		for i, bodyWord := range bodyWords {
-			if strings.ToLower(bodyWord) == blockedWord {
-				bodyWords[i] = "****"
+	for _, word := range bodyWords {
+		for _, blocked := range blockedWords {
+			if strings.EqualFold(word, blocked) {
+				return false
 			}
 		}
 	}
 
-	return strings.Join(bodyWords, " ")
+	return true
 }
