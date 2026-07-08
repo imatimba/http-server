@@ -4,7 +4,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/imatimba/http-server/internal/database"
 )
+
+type userResponse struct {
+	ID        string `json:"id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+	Email     string `json:"email"`
+}
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.Marshal(payload)
@@ -31,4 +41,13 @@ func validateChirp(body string) bool {
 	}
 
 	return true
+}
+
+func userToResponse(user database.User) userResponse {
+	return userResponse{
+		ID:        user.ID.String(),
+		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+		Email:     user.Email,
+	}
 }
