@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/imatimba/http-server/internal/auth"
 	"github.com/imatimba/http-server/internal/database"
 )
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Body   string `json:"body"`
-		UserID string `json:"user_id"`
+		Body string `json:"body"`
 	}
 
 	params := parameters{}
@@ -22,15 +22,20 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if !validateChirp(params.Body) {
-		respondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Chirp contains blocked words"})
+	bearerToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
 		return
 	}
 
-	// parse user id as uuid
-	userUUID, err := uuid.Parse(params.UserID)
+	userUUID, err := auth.ValidateJWT(bearerToken, cfg.secretKey)
 	if err != nil {
-		http.Error(w, "Invalid user_id", http.StatusBadRequest)
+		http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+		return
+	}
+
+	if !validateChirp(params.Body) {
+		respondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Chirp contains blocked words"})
 		return
 	}
 

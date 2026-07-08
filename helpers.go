@@ -14,6 +14,7 @@ type userResponse struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 	Email     string `json:"email"`
+	Token     string `json:"token,omitempty"`
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -43,11 +44,12 @@ func validateChirp(body string) bool {
 	return true
 }
 
-func userToResponse(user database.User) userResponse {
+func userToResponse(user database.User, token string) userResponse {
 	return userResponse{
 		ID:        user.ID.String(),
 		CreatedAt: user.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
 		Email:     user.Email,
+		Token:     token,
 	}
 }
