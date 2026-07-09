@@ -22,7 +22,7 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	bearerToken, err := auth.GetBearerToken(r.Header)
+	bearerToken, err := auth.GetAuthToken(r.Header)
 	if err != nil {
 		http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
 		return

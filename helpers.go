@@ -10,11 +10,12 @@ import (
 )
 
 type userResponse struct {
-	ID        string `json:"id"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-	Email     string `json:"email"`
-	Token     string `json:"token,omitempty"`
+	ID           string `json:"id"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+	Email        string `json:"email"`
+	Token        string `json:"token,omitempty"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -44,12 +45,13 @@ func validateChirp(body string) bool {
 	return true
 }
 
-func userToResponse(user database.User, token string) userResponse {
+func userToResponse(user database.User, token string, refreshToken string) userResponse {
 	return userResponse{
-		ID:        user.ID.String(),
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
-		Email:     user.Email,
-		Token:     token,
+		ID:           user.ID.String(),
+		CreatedAt:    user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:    user.UpdatedAt.Format(time.RFC3339),
+		Email:        user.Email,
+		Token:        token,
+		RefreshToken: refreshToken,
 	}
 }

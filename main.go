@@ -91,6 +91,8 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpByID)
 	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
+	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefreshToken)
+	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevokeRefreshToken)
 
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
 	log.Fatal(server.ListenAndServe())
